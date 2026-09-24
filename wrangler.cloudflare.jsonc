@@ -1,0 +1,44 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "haus-grace-properties",
+  "main": "./dist/server/index.js",
+  "compatibility_date": "2026-07-22",
+  "compatibility_flags": ["nodejs_compat"],
+  "routes": [
+    {
+      "pattern": "espacios.me/h&g/properties*",
+      "zone_name": "espacios.me"
+    },
+    {
+      "pattern": "espacios.me/h%26g/properties*",
+      "zone_name": "espacios.me"
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "espacios_contact_db",
+      "database_id": "2a972b39-18f6-4c33-9b03-ef20cdeafa8d",
+      "migrations_dir": "drizzle-agent"
+    }
+  ],
+  "ai": {
+    "binding": "AI"
+  },
+  "images": {
+    "binding": "IMAGES"
+  },
+  "send_email": [
+    {
+      "name": "EMAIL"
+    }
+  ],
+  "assets": {
+    "directory": "./dist/client",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+  "observability": {
+    "enabled": true
+  }
+}
