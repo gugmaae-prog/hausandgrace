@@ -19,6 +19,8 @@ jobs:
           node-version: "22.13.0"
           cache: npm
       - run: npm ci
+      - name: Normalize script permissions
+        run: chmod +x scripts/*.sh
       - name: Application tests
         run: npm test
       - name: Lint report
