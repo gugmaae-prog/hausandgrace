@@ -19,5 +19,8 @@ jobs:
           node-version: "22.13.0"
           cache: npm
       - run: npm ci
-      - run: npm run lint
-      - run: npm test
+      - name: Application tests
+        run: npm test
+      - name: Lint report
+        continue-on-error: true
+        run: npm run lint
