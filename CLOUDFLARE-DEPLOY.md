@@ -1,8 +1,22 @@
 # Cloudflare deployment
 
-The application is configured for:
+## Primary deployment
+
+The canonical production site is `https://hausandgrace.ae` (and `www.hausandgrace.ae`) using `wrangler.hausandgrace.jsonc` and Worker `haus-grace-primary`.
+
+```bash
+npm install
+npm run build:primary
+npm run deploy:primary
+```
+
+## Secondary Espacios mirror
+
+The optional/legacy mounted surface is:
 
 `https://espacios.me/h&g/properties`
+
+It uses `wrangler.cloudflare.jsonc` and Worker `haus-grace-properties`.
 
 It deploys as a full-stack Cloudflare Worker with static assets and a D1 lead
 database. The `espacios.me` DNS zone must already be active in the Cloudflare
