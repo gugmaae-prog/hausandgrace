@@ -1,11 +1,18 @@
 # HAUS & GRACE
 
+> **Repository status — 24 September 2026**
+>
+> This is a **public source repository** for Haus & Grace. Never commit credentials, agent password material, customer/lead exports, CRM datasets, email inbox data, or runtime secret values.
+>
+> **AI ownership:** **Grace belongs to Haus & Grace only.** Sonu is PSR-only. Espacios AI/Aether is Espacios-only.
+>
+> **Primary production domain:** `hausandgrace.ae` / `www.hausandgrace.ae`, served by the `haus-grace-primary` Cloudflare Worker according to the checked-in production manifest.
+>
+> See [the platform audit](docs/platform-audit-2026-09-24.md) and [security policy](SECURITY.md).
 A full-stack UAE luxury property catalogue running on
 [vinext](https://github.com/cloudflare/vinext), with Cloudflare D1 lead capture.
 
-The Cloudflare-ready build is mounted at
-`https://espacios.me/h&g/properties`. See `CLOUDFLARE-DEPLOY.md` for the exact
-first-deployment and update commands.
+The primary Cloudflare deployment targets `https://hausandgrace.ae`. A secondary legacy/mirror mount may also be deployed at `https://espacios.me/h&g/properties` from the same source using its separate Wrangler manifest. See `CLOUDFLARE-DEPLOY.md` for the deployment split.
 
 ## Project catalogue
 
