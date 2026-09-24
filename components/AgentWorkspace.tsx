@@ -812,7 +812,8 @@ function SecondaryUnitsPanel() {
   }, []);
 
   useEffect(() => {
-    void loadUnits();
+    const frame = window.requestAnimationFrame(() => { void loadUnits(); });
+    return () => window.cancelAnimationFrame(frame);
   }, [loadUnits]);
 
   function updateDraft<Key extends keyof SecondaryUnitDraft>(key: Key, value: SecondaryUnitDraft[Key]) {
@@ -1160,7 +1161,10 @@ function AdminPanel({ currentUser }: { currentUser: AgentUser }) {
     }
   }, []);
 
-  useEffect(() => { void loadUsers(); }, [loadUsers]);
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => { void loadUsers(); });
+    return () => window.cancelAnimationFrame(frame);
+  }, [loadUsers]);
 
   async function createUser(event: FormEvent) {
     event.preventDefault();
@@ -1589,8 +1593,6 @@ function DocumentEditor({ document, user, onSaved }: { document: AgentDocument; 
   const [message, setMessage] = useState(`Please find the HAUS & GRACE curated brief prepared for ${document.client_name}.`);
   const [status, setStatus] = useState("");
 
-  useEffect(() => { setDraft(document); setSubject(document.title); }, [document]);
-
   async function persistDraft() {
     return api<{ document: AgentDocument }>(`/api/agent/documents/${draft.id}`, {
       method: "PATCH",
@@ -1973,14 +1975,13 @@ function GuidedDemo({
   const [step, setStep] = useState(0);
   const [targetRect, setTargetRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
   const guide = toolDemos[tool];
-  useEffect(() => { setStep(0); }, [tool]);
   const activeStep = guide.steps[step];
 
   useEffect(() => {
     const target = document.querySelector<HTMLElement>(`[data-tour="${activeStep.selector}"]`);
     if (!target) {
-      setTargetRect(null);
-      return;
+      const clearFrame = window.requestAnimationFrame(() => setTargetRect(null));
+      return () => window.cancelAnimationFrame(clearFrame);
     }
     target.setAttribute("data-tour-active", "");
     target.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
@@ -2091,12 +2092,18 @@ export function AgentWorkspace() {
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => { void loadDocuments(); }, [loadDocuments]);
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => { void loadDocuments(); });
+    return () => window.cancelAnimationFrame(frame);
+  }, [loadDocuments]);
 
   useEffect(() => {
     if (!user || user.mustChangePassword || user.onboardingRequired) return;
     const key = `hg-workspace-demo:${user.email}`;
-    if (!window.localStorage.getItem(key)) setDemoTool("overview");
+    if (!window.localStorage.getItem(key)) {
+      const frame = window.requestAnimationFrame(() => setDemoTool("overview"));
+      return () => window.cancelAnimationFrame(frame);
+    }
   }, [user]);
 
   function closeDemo() {
@@ -2128,7 +2135,7 @@ export function AgentWorkspace() {
     <div className="agent-main">
       <header className="agent-mobile-bar"><Logo /><div className="agent-mobile-profile"><AgentAvatar user={user} className="agent-avatar-mobile" /><details><summary>Workspace menu</summary><nav>{availableTools.map((tool) => <button type="button" key={tool.id} onClick={() => { setDocument(null); setActive(tool.id); }}>{tool.label}</button>)}<button type="button" onClick={() => setDemoTool(document ? "documents" : active)}>Guided demo</button><button type="button" onClick={signOut}>Sign out</button></nav></details></div></header>
       <div className="agent-context-help"><div><span>{document ? "Document editor" : tools.find((tool) => tool.id === active)?.label}</span><small>Need a quick walkthrough of this page?</small></div><button type="button" onClick={() => setDemoTool(document ? "documents" : active)}>Show guided demo</button></div>
-      {document ? <DocumentEditor document={document} user={user} onSaved={(saved) => { setDocument(saved); void loadDocuments(); }} /> :
+      {document ? <DocumentEditor key={document.id} document={document} user={user} onSaved={(saved) => { setDocument(saved); void loadDocuments(); }} /> :
         active === "overview" ? <Overview user={user} documents={documents} availableTools={availableTools} onNavigate={setActive} /> :
         active === "chat" ? <ChatPanel /> :
         active === "portfolio" ? <AdvisorPortfolioPanel user={user} /> :
@@ -2138,6 +2145,6 @@ export function AgentWorkspace() {
         active === "admin" ? <AdminPanel currentUser={user} /> :
         <Documents documents={documents} user={user} onOpen={(id) => void openDocument(id)} onDeleted={() => void loadDocuments()} />}
     </div>
-    {demoTool && <GuidedDemo tool={demoTool} onClose={closeDemo} />}
+    {demoTool && <GuidedDemo key={demoTool} tool={demoTool} onClose={closeDemo} />}
   </div>;
 }
