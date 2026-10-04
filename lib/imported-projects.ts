@@ -1,3 +1,4 @@
+import { correctImportedProject, unavailableBrochureSlugs } from "@/lib/catalogue-corrections";
 import registryData from "@/data/projects.json";
 import { curatedLaunches, type LaunchUnit } from "@/data/curated-launches";
 import { extractProjectPricePerSqft, extractSizeText, formatAedPerSqft, getAreaPricePerSqft, type PricePerSqft } from "@/lib/market-pricing";
@@ -77,7 +78,7 @@ const curatedRecords: RegistryProject[] = curatedLaunches.map((launch) => ({
   statusLabel: launch.statusLabel,
 }));
 const curatedSlugs = new Set(curatedRecords.map((project) => project.slug));
-const mergedProjects = [...curatedRecords, ...rawRegistry.projects.filter((project) => !curatedSlugs.has(project.slug))];
+const mergedProjects = [...curatedRecords, ...rawRegistry.projects.map(correctImportedProject).filter((project) => !curatedSlugs.has(project.slug))];
 const registry: Registry = {
   ...rawRegistry,
   totalUaeProjects: mergedProjects.length,
@@ -87,7 +88,7 @@ const registry: Registry = {
     counts[project.emirate] = (counts[project.emirate] || 0) + 1;
     return counts;
   }, {}),
-  developers: [...new Set(mergedProjects.map((project) => project.developer).filter(Boolean))].sort(),
+  developers: [...new Set(mergedProjects.map((project) => project.developer).filter((name) => Boolean(name) && name !== "Developer to confirm"))].sort(),
   projects: mergedProjects,
 };
 const projectMap = new Map(registry.projects.map((project) => [project.slug, project]));
@@ -237,7 +238,7 @@ export async function getImportedProject(slug: string): Promise<ImportedProject 
       averageSize: curated.areaFrom || "Available on request",
       pricePerSqft: registryProjectPricePerSqft(record),
       areaPricePerSqft: getAreaPricePerSqft(curated.area, curated.propertyTypes, curated.emirate),
-      brochure: curated.brochure,
+      brochure: unavailableBrochureSlugs.has(slug) ? "" : curated.brochure,
       coordinates: curated.coordinates,
       statusLabel: curated.statusLabel,
       releaseNote: curated.releaseNote,

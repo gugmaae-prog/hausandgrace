@@ -1,3 +1,5 @@
+import { verifiedPdfResponse } from "@/lib/verified-pdf";
+import { unavailableBrochureSlugs } from "@/lib/catalogue-corrections";
 import { getProjectRecord } from "@/lib/imported-projects";
 
 type RouteContext = { params: Promise<{ slug: string }> };
@@ -6,7 +8,7 @@ const TRUSTED_BROCHURE_HOSTS = new Set(["cdn.opr.ae", "new-projects-media.proper
 
 function brochureUrlFor(slug: string) {
   const record = getProjectRecord(slug);
-  if (!record?.brochure) return null;
+  if (!record?.brochure || unavailableBrochureSlugs.has(slug)) return null;
 
   try {
     const url = new URL(record.brochure);
@@ -17,25 +19,23 @@ function brochureUrlFor(slug: string) {
   }
 }
 
-export async function GET(request: Request, { params }: RouteContext) {
+export async function GET(_request: Request, { params }: RouteContext) {
   const { slug } = await params;
   const brochureUrl = brochureUrlFor(slug);
-  if (!brochureUrl) return new Response("Project brochure is not available.", { status: 404 });
+  if (!brochureUrl) return new Response("Project brochure is not available.", { status: 404, headers: { "cache-control": "no-store", "content-type": "text/plain; charset=utf-8" } });
 
   const requestHeaders = new Headers({
     accept: "application/pdf",
     "user-agent": "HAUS-GRACE-Brochure-Service/1.0",
   });
-  const range = request.headers.get("range");
-  if (range) requestHeaders.set("range", range);
   const upstream = await fetch(brochureUrl, { headers: requestHeaders });
-  if (!upstream.ok || !upstream.body) {
-    await upstream.body?.cancel();
-    return new Response("Project brochure is temporarily unavailable.", { status: 502 });
+  const body = await verifiedPdfResponse(upstream);
+  if (!body) {
+    return new Response("Project brochure is temporarily unavailable.", { status: 502, headers: { "cache-control": "no-store", "content-type": "text/plain; charset=utf-8" } });
   }
 
   const headers = new Headers({
-    "accept-ranges": upstream.headers.get("accept-ranges") || "bytes",
+    "accept-ranges": "none",
     "cache-control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",
     "content-disposition": `inline; filename="${slug}-brochure.pdf"`,
     "content-type": "application/pdf",
@@ -43,12 +43,10 @@ export async function GET(request: Request, { params }: RouteContext) {
   });
   const length = upstream.headers.get("content-length");
   const modified = upstream.headers.get("last-modified");
-  const contentRange = upstream.headers.get("content-range");
   const etag = upstream.headers.get("etag");
   if (length) headers.set("content-length", length);
   if (modified) headers.set("last-modified", modified);
-  if (contentRange) headers.set("content-range", contentRange);
   if (etag) headers.set("etag", etag);
 
-  return new Response(upstream.body, { status: upstream.status === 206 ? 206 : 200, headers });
+  return new Response(body, { status: 200, headers });
 }
