@@ -134,11 +134,11 @@ export function getCommunityProfile(slug: string) {
   return communityBySlugCache.get(slug) ?? null;
 }
 
-const excludedDeveloperNames = new Set(["al", "g", "w", "the", "new", "dubai", "district", "one"]);
+const excludedDeveloperNames = new Set(["al", "g", "w", "the", "new", "dubai", "district", "one", "developer to confirm"]);
 
 function credibleDeveloper(name: string) {
   const normalized = name.trim().toLowerCase();
-  return normalized.length >= 3 && !excludedDeveloperNames.has(normalized) && /[a-z]{3}/i.test(normalized);
+  return normalized.length >= 3 && !excludedDeveloperNames.has(normalized) && normalized.replace(/[^a-z]/g, "").length >= 3;
 }
 
 function displayDeveloperName(names: string[]) {
@@ -149,7 +149,7 @@ function displayDeveloperName(names: string[]) {
   })[0];
 }
 
-function developerSlugFor(value: string) {
+export function developerSlugFor(value: string) {
   const slug = slugify(value);
   return /^imtiaz(?:-development|-developments)?$/.test(slug) ? "imtiaz" : slug;
 }
